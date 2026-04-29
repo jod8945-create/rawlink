@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Search, ShoppingCart, Package, TrendingUp, TrendingDown, Plus, Minus, X, Check, AlertCircle, BarChart3, Boxes, Truck, Filter, ArrowUpRight, ArrowDownRight, Trash2, Menu, ChevronRight, Star, Building2, Store, MapPin, Shield, Heart, User, Bell, Grid3x3, LineChart, DollarSign, Activity, Edit, Warehouse, Sparkles, ArrowRight, FileText, Calculator, Send, Clock, HelpCircle, ChevronLeft, Award, Lightbulb, Target, Zap, Bot, MessageCircle, Command, Brain, Map, Navigation, Cpu, Database, Crown, Rocket, Infinity } from "lucide-react";
 
 function LogoIcon({ size = 40 }) {
@@ -81,6 +81,10 @@ export default function App() {
   const [notifOpen, setNotifOpen] = useState(false);
   const [mapaOpen, setMapaOpen] = useState(false);
   const [planesOpen, setPlanesOpen] = useState(false);
+  const [equipoOpen, setEquipoOpen] = useState(false);
+  const [confettiActive, setConfettiActive] = useState(false);
+  const logoClicksRef = useRef(0);
+  const logoTimerRef = useRef(null);
   const [notificaciones, setNotificaciones] = useState([
     { id: 1, tipo: "precio", titulo: "Polipropileno bajó 2.4%", desc: "Buen momento para comprar", tiempo: "Hace 15 min", leida: false, icono: TrendingDown, color: "#10B981" },
     { id: 2, tipo: "stock", titulo: "Stock bajo: Dióxido de Titanio", desc: "Solo quedan 120 kg", tiempo: "Hace 2 horas", leida: false, icono: AlertCircle, color: "#F59E0B" },
@@ -215,6 +219,28 @@ export default function App() {
     showToast("Datos limpiados");
   };
 
+  // 🎉 Easter Egg: triple clic en el logo activa confetti
+  const handleLogoClick = () => {
+    logoClicksRef.current += 1;
+
+    // Limpiar timer anterior si existe
+    if (logoTimerRef.current) clearTimeout(logoTimerRef.current);
+
+    if (logoClicksRef.current >= 3) {
+      // ¡Triple clic detectado!
+      setConfettiActive(true);
+      logoClicksRef.current = 0;
+    } else {
+      // Reset si no completa los 3 clics en 1.5 segundos
+      logoTimerRef.current = setTimeout(() => {
+        logoClicksRef.current = 0;
+      }, 1500);
+    }
+
+    // Navegación normal del logo
+    setVista("inicio");
+  };
+
   // Notificaciones
   const marcarLeida = (id) => setNotificaciones(p => p.map(n => n.id === id ? { ...n, leida: true } : n));
   const marcarTodasLeidas = () => setNotificaciones(p => p.map(n => ({ ...n, leida: true })));
@@ -233,6 +259,7 @@ export default function App() {
         setNotifOpen(false);
         setMapaOpen(false);
         setPlanesOpen(false);
+        setEquipoOpen(false);
       }
     };
     window.addEventListener("keydown", handler);
@@ -253,12 +280,12 @@ export default function App() {
         <div className="border-b border-stone-800/60" style={{ background: "rgba(0,0,0,0.3)" }}>
           <div className="max-w-[1600px] mx-auto px-4 lg:px-8 py-2 flex items-center justify-between text-xs text-stone-400">
             <div className="flex items-center gap-3"><span className="flex items-center gap-1.5"><MapPin size={11} className="text-orange-500" />Bogotá D.C.</span><span className="hidden md:inline text-stone-500">·</span><button onClick={cargarDatosDemo} className="flex items-center gap-1 px-2 py-0.5 rounded text-orange-400 hover:text-orange-300 font-semibold" style={{ background: "rgba(249, 115, 22, 0.1)", border: "1px solid rgba(249, 115, 22, 0.3)" }}><Database size={10} />Cargar demo</button>{(inventario.length > 0 || pedidos.length > 0) && <button onClick={limpiarDatos} className="hidden md:flex items-center gap-1 text-stone-500 hover:text-red-400"><Trash2 size={10} />Limpiar</button>}</div>
-            <div className="flex items-center gap-3"><button onClick={() => setPlanesOpen(true)} className="flex items-center gap-1 text-orange-400 hover:text-orange-300 font-semibold"><Crown size={11} />Planes</button><button onClick={() => setPantalla("landing")} className="hover:text-orange-400 flex items-center gap-1"><User size={11} /> Cambiar perfil</button></div>
+            <div className="flex items-center gap-3"><button onClick={() => setEquipoOpen(true)} className="flex items-center gap-1 text-stone-400 hover:text-orange-400"><Sparkles size={11} />Equipo</button><button onClick={() => setPlanesOpen(true)} className="flex items-center gap-1 text-orange-400 hover:text-orange-300 font-semibold"><Crown size={11} />Planes</button><button onClick={() => setPantalla("landing")} className="hover:text-orange-400 flex items-center gap-1"><User size={11} /> Cambiar perfil</button></div>
           </div>
         </div>
         <div className="max-w-[1600px] mx-auto px-4 lg:px-8">
           <div className="flex items-center gap-4 lg:gap-8 py-3.5">
-            <button onClick={() => setVista("inicio")} className="flex items-center gap-2.5 flex-shrink-0">
+            <button onClick={handleLogoClick} className="flex items-center gap-2.5 flex-shrink-0" title="Triple clic para sorpresa 🎉">
               <LogoIcon size={42} />
               <div><RawlinkText size={22} light /><div className="text-[9px] text-stone-500 leading-none mt-1 tracking-[0.2em] font-mono">CONEXIÓN DIRECTA</div></div>
             </button>
@@ -333,6 +360,10 @@ export default function App() {
       {notifOpen && <NotifPanel notificaciones={notificaciones} onClose={() => setNotifOpen(false)} marcarLeida={marcarLeida} marcarTodas={marcarTodasLeidas} />}
       {mapaOpen && <MapaProveedores onClose={() => setMapaOpen(false)} />}
       {planesOpen && <ModalPlanes onClose={() => setPlanesOpen(false)} showToast={showToast} />}
+      {equipoOpen && <ModalEquipo onClose={() => setEquipoOpen(false)} />}
+
+      {/* 🎉 Easter Egg Expoandes 2026 */}
+      {confettiActive && <ConfettiExpoandes onClose={() => setConfettiActive(false)} />}
       <footer className="border-t border-stone-800 mt-16" style={{ background: "#0d0a08" }}>
         <div className="max-w-[1600px] mx-auto px-4 lg:px-8 py-12">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
@@ -2974,6 +3005,389 @@ function GraficoGananciasNetas() {
             </div>
             <div className="flex items-center gap-2 text-white">
               <Award size={32} className="opacity-80" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============ EASTER EGG EXPOANDES 2026 ============
+function ConfettiExpoandes({ onClose }) {
+  // Generamos 80 partículas con propiedades aleatorias
+  const particulas = useMemo(() => {
+    const colores = ["#F97316", "#EA580C", "#FB923C", "#475569", "#1e293b", "#FCD34D", "#10B981", "#FFFFFF"];
+    return Array.from({ length: 80 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      delay: Math.random() * 2,
+      duration: 3 + Math.random() * 3,
+      color: colores[Math.floor(Math.random() * colores.length)],
+      size: 6 + Math.random() * 12,
+      rotation: Math.random() * 360,
+      shape: Math.random() > 0.5 ? "rect" : "circle",
+      drift: (Math.random() - 0.5) * 200,
+    }));
+  }, []);
+
+  // Cerrar al hacer clic en cualquier parte
+  useEffect(() => {
+    const t = setTimeout(() => onClose(), 6000);
+    return () => clearTimeout(t);
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-[300] flex items-center justify-center pointer-events-none overflow-hidden" style={{ background: "rgba(13, 10, 8, 0.4)", backdropFilter: "blur(2px)" }}>
+      <style>{`
+        @keyframes confettiFall {
+          0% {
+            transform: translateY(-100vh) translateX(0) rotate(0deg);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(110vh) translateX(var(--drift, 0px)) rotate(var(--rot-end, 720deg));
+            opacity: 0.8;
+          }
+        }
+        @keyframes messageZoom {
+          0% { opacity: 0; transform: scale(0.3) rotate(-10deg); }
+          50% { opacity: 1; transform: scale(1.15) rotate(2deg); }
+          70% { transform: scale(0.95) rotate(-1deg); }
+          100% { opacity: 1; transform: scale(1) rotate(0deg); }
+        }
+        @keyframes messagePulse {
+          0%, 100% { box-shadow: 0 0 60px rgba(249, 115, 22, 0.5), 0 30px 80px rgba(0,0,0,0.6); }
+          50% { box-shadow: 0 0 120px rgba(249, 115, 22, 0.8), 0 30px 100px rgba(0,0,0,0.6); }
+        }
+        @keyframes sparkle {
+          0%, 100% { opacity: 0; transform: scale(0); }
+          50% { opacity: 1; transform: scale(1.2); }
+        }
+        @keyframes textGradient {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+        .confetti-particle {
+          position: absolute;
+          top: -20px;
+          will-change: transform;
+        }
+        .easter-message {
+          animation: messageZoom 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both, messagePulse 2s ease-in-out infinite 0.7s;
+        }
+        .gradient-text {
+          background: linear-gradient(90deg, #F97316, #FCD34D, #F97316, #FB923C);
+          background-size: 300% 100%;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: textGradient 3s ease-in-out infinite;
+        }
+        .sparkle-1 { animation: sparkle 1.5s ease-in-out infinite 0.2s; }
+        .sparkle-2 { animation: sparkle 1.5s ease-in-out infinite 0.5s; }
+        .sparkle-3 { animation: sparkle 1.5s ease-in-out infinite 0.8s; }
+        .sparkle-4 { animation: sparkle 1.5s ease-in-out infinite 1.1s; }
+      `}</style>
+
+      {/* Partículas de confetti cayendo */}
+      {particulas.map(p => (
+        <div
+          key={p.id}
+          className="confetti-particle"
+          style={{
+            left: `${p.left}%`,
+            width: p.size,
+            height: p.shape === "rect" ? p.size * 0.5 : p.size,
+            background: p.color,
+            borderRadius: p.shape === "circle" ? "50%" : "2px",
+            animation: `confettiFall ${p.duration}s linear ${p.delay}s forwards`,
+            "--drift": `${p.drift}px`,
+            "--rot-end": `${p.rotation + 720}deg`,
+          }}
+        />
+      ))}
+
+      {/* Mensaje central */}
+      <div className="relative easter-message pointer-events-auto" onClick={onClose}>
+        <div className="relative px-12 py-10 mx-4 text-center grain overflow-hidden" style={{
+          background: "linear-gradient(135deg, #2a2018 0%, #1a1612 50%, #0d0a08 100%)",
+          border: "2px solid rgba(249, 115, 22, 0.4)",
+          borderRadius: "24px",
+          maxWidth: "550px",
+        }}>
+          {/* Brillos decorativos */}
+          <div className="absolute top-0 left-0 w-32 h-32 rounded-full blur-3xl" style={{ background: "rgba(249, 115, 22, 0.4)" }}></div>
+          <div className="absolute bottom-0 right-0 w-32 h-32 rounded-full blur-3xl" style={{ background: "rgba(71, 85, 105, 0.4)" }}></div>
+
+          {/* Sparkles decorativos */}
+          <Sparkles size={20} className="absolute top-4 right-4 text-orange-400 sparkle-1" />
+          <Sparkles size={16} className="absolute top-8 left-6 text-amber-300 sparkle-2" />
+          <Sparkles size={24} className="absolute bottom-6 left-8 text-orange-500 sparkle-3" />
+          <Sparkles size={14} className="absolute bottom-4 right-10 text-yellow-300 sparkle-4" />
+
+          <div className="relative">
+            {/* Logo gigante */}
+            <div className="flex justify-center mb-5">
+              <LogoIcon size={80} />
+            </div>
+
+            {/* Emoji de fiesta */}
+            <div className="text-5xl mb-3">🎉</div>
+
+            {/* Mensaje principal con gradiente animado */}
+            <div className="font-black text-3xl md:text-4xl mb-3 font-display gradient-text" style={{ letterSpacing: "-0.02em" }}>
+              ¡Bienvenidos a<br />Expoandes 2026!
+            </div>
+
+            {/* Subtítulo */}
+            <div className="text-stone-300 text-base md:text-lg mb-2 font-medium">
+              Gracias por probar <span className="font-black text-orange-400">rawlink</span>
+            </div>
+
+            {/* Tagline */}
+            <div className="text-stone-500 text-xs font-mono tracking-[0.25em] uppercase mb-5">
+              Conexión directa y auténtica
+            </div>
+
+            {/* Equipo */}
+            <div className="pt-4 border-t border-stone-800/60">
+              <div className="text-[10px] font-mono text-stone-500 tracking-[0.2em] mb-2">PRESENTADO POR</div>
+              <div className="text-xs text-stone-300 leading-relaxed">
+                Arlexis Duque · Jeronimo Osorio · Juan David Velandia<br />
+                Juan Diego Sanabria · Juan Esteban Orozco
+              </div>
+            </div>
+
+            <div className="text-[9px] text-stone-600 mt-4 font-mono">Toca para cerrar</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============ MODAL DE EQUIPO / SOBRE NOSOTROS ============
+function ModalEquipo({ onClose }) {
+  const equipo = [
+    {
+      nombre: "Jeronimo Osorio",
+      foto: "/equipo/jeronimo.jpg",
+      iniciales: "JO",
+      carrera: "Ingeniería de Sistemas",
+      rol: "CEO & CTO",
+      area: "Liderazgo y Desarrollo",
+      frase: "Apasionado por construir tecnología que resuelva problemas reales de la industria colombiana.",
+      color: "#F97316",
+      gradient: "linear-gradient(135deg, #F97316, #EA580C)",
+      icon: Crown,
+    },
+    {
+      nombre: "Juan Diego Sanabria",
+      foto: "/equipo/juan-diego.jpg",
+      iniciales: "JD",
+      carrera: "Ingeniería de Sistemas",
+      rol: "CDO",
+      area: "Diseño y UX",
+      frase: "Diseñador enfocado en crear experiencias que conecten personas con productos.",
+      color: "#3B82F6",
+      gradient: "linear-gradient(135deg, #3B82F6, #2563EB)",
+      icon: Sparkles,
+    },
+    {
+      nombre: "Arlexis Duque Borda",
+      foto: "/equipo/arlexis.jpg",
+      iniciales: "AD",
+      carrera: "Ingeniería de Sistemas",
+      rol: "CFO",
+      area: "Finanzas y Estrategia",
+      frase: "Estratega financiero con visión en escalabilidad y modelos sostenibles.",
+      color: "#10B981",
+      gradient: "linear-gradient(135deg, #10B981, #059669)",
+      icon: DollarSign,
+    },
+    {
+      nombre: "Juan David Velandia",
+      foto: "/equipo/juan-david.jpg",
+      iniciales: "JV",
+      carrera: "Ingeniería de Sistemas",
+      rol: "COO",
+      area: "Operaciones y Logística",
+      frase: "Operador con foco en eficiencia, calidad y gestión de proveedores.",
+      color: "#8B5CF6",
+      gradient: "linear-gradient(135deg, #8B5CF6, #7C3AED)",
+      icon: Truck,
+    },
+    {
+      nombre: "Juan Esteban Orozco",
+      foto: "/equipo/juan-esteban.jpg",
+      iniciales: "JE",
+      carrera: "Ingeniería de Sistemas",
+      rol: "CMO",
+      area: "Marketing y Ventas",
+      frase: "Comunicador que traduce productos en historias que conectan con clientes.",
+      color: "#EC4899",
+      gradient: "linear-gradient(135deg, #EC4899, #DB2777)",
+      icon: Zap,
+    },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-[200] overflow-y-auto fade-in" style={{ background: "rgba(13, 10, 8, 0.95)", backdropFilter: "blur(10px)" }} onClick={onClose}>
+      {/* Botón flotante rojo SIEMPRE visible */}
+      <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="fixed top-4 right-4 md:top-8 md:right-8 z-[300] w-14 h-14 rounded-full flex items-center justify-center text-white font-bold transition-all hover:scale-110" style={{ background: "linear-gradient(135deg, #EF4444, #DC2626)", boxShadow: "0 8px 32px rgba(239, 68, 68, 0.8), 0 0 0 4px rgba(239, 68, 68, 0.2)" }} title="Cerrar (ESC)">
+        <X size={28} strokeWidth={3} />
+      </button>
+
+      <div className="min-h-screen flex items-start justify-center p-4 py-8">
+        <div className="max-w-6xl w-full" style={{ background: "linear-gradient(180deg, #1a1612 0%, #0d0a08 100%)", border: "1px solid #3a3028", borderRadius: "20px", boxShadow: "0 30px 80px rgba(0,0,0,0.7)" }} onClick={e => e.stopPropagation()}>
+
+          {/* Hero header */}
+          <div className="relative p-8 md:p-12 grain overflow-hidden" style={{ background: "linear-gradient(135deg, #2a1f15 0%, #1a1612 50%, #0d0a08 100%)", borderRadius: "20px 20px 0 0" }}>
+            {/* Efectos decorativos */}
+            <div className="absolute top-0 right-0 w-96 h-96 rounded-full blur-3xl -translate-y-32 translate-x-32" style={{ background: "rgba(249, 115, 22, 0.15)" }}></div>
+            <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full blur-3xl translate-y-16 -translate-x-16" style={{ background: "rgba(71, 85, 105, 0.2)" }}></div>
+
+            <div className="relative text-center">
+              <div className="flex justify-center mb-4">
+                <LogoIcon size={56} />
+              </div>
+              <div className="text-[10px] font-mono tracking-[0.3em] text-orange-500 mb-2">EL EQUIPO DETRÁS DE RAWLINK</div>
+              <h1 className="text-3xl md:text-5xl font-black text-stone-100 font-display mb-4" style={{ letterSpacing: "-0.02em" }}>
+                Cinco mentes,<br />
+                <span className="bg-clip-text text-transparent" style={{ backgroundImage: "linear-gradient(90deg, #F97316, #FB923C, #F97316)" }}>una visión.</span>
+              </h1>
+              <p className="text-stone-400 max-w-2xl mx-auto text-base md:text-lg leading-relaxed">
+                Somos cinco estudiantes de Ingeniería de Sistemas convencidos de que la industria colombiana merece herramientas modernas para conectar empresas y proveedores.
+              </p>
+            </div>
+          </div>
+
+          {/* Stats decorativos */}
+          <div className="px-6 md:px-12 -mt-4 relative z-10">
+            <div className="grid grid-cols-3 gap-3 md:gap-6">
+              <div className="p-3 md:p-4 text-center" style={{ background: "linear-gradient(135deg, #2a2018, #1a1612)", border: "1px solid #3a3028", borderRadius: "12px" }}>
+                <div className="text-2xl md:text-4xl font-black font-display text-orange-400">5</div>
+                <div className="text-[10px] md:text-xs font-mono tracking-wider text-stone-500">FUNDADORES</div>
+              </div>
+              <div className="p-3 md:p-4 text-center" style={{ background: "linear-gradient(135deg, #2a2018, #1a1612)", border: "1px solid #3a3028", borderRadius: "12px" }}>
+                <div className="text-2xl md:text-4xl font-black font-display text-orange-400">1</div>
+                <div className="text-[10px] md:text-xs font-mono tracking-wider text-stone-500">VISIÓN</div>
+              </div>
+              <div className="p-3 md:p-4 text-center" style={{ background: "linear-gradient(135deg, #2a2018, #1a1612)", border: "1px solid #3a3028", borderRadius: "12px" }}>
+                <div className="text-2xl md:text-4xl font-black font-display text-orange-400">∞</div>
+                <div className="text-[10px] md:text-xs font-mono tracking-wider text-stone-500">POSIBILIDADES</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Tarjetas del equipo */}
+          <div className="p-6 md:p-12">
+            <div className="text-center mb-8">
+              <div className="text-[10px] font-mono tracking-[0.3em] text-orange-500 mb-2">CONOCE AL EQUIPO</div>
+              <h2 className="text-2xl md:text-3xl font-black text-stone-100 font-display">Las personas detrás del producto</h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {equipo.map((p, idx) => {
+                const Icono = p.icon;
+                // El primer (CEO) ocupa más espacio en pantallas grandes
+                const especial = idx === 0;
+                return (
+                  <div key={p.nombre} className={`relative grain overflow-hidden group ${especial ? "lg:col-span-3 lg:p-8" : "p-6"}`} style={{
+                    background: "linear-gradient(135deg, #2a2018 0%, #1a1612 100%)",
+                    border: `${especial ? "2px" : "1px"} solid ${especial ? p.color + "60" : "#3a3028"}`,
+                    borderRadius: "16px",
+                    boxShadow: especial ? `0 20px 60px ${p.color}20` : "0 10px 30px rgba(0,0,0,0.3)",
+                  }}>
+                    {/* Resplandor de fondo */}
+                    <div className="absolute top-0 right-0 w-48 h-48 rounded-full blur-3xl -translate-y-12 translate-x-12 opacity-30 group-hover:opacity-50 transition-opacity" style={{ background: p.color }}></div>
+
+                    {especial ? (
+                      // Layout especial para CEO (horizontal en grande)
+                      <div className="relative flex flex-col lg:flex-row items-center gap-6 p-2">
+                        <div className="flex-shrink-0">
+                          <div className="relative">
+                            <div className="absolute inset-0 rounded-full blur-xl opacity-50" style={{ background: p.gradient }}></div>
+                            <div className="relative w-32 h-32 lg:w-40 lg:h-40 rounded-full overflow-hidden" style={{ border: `3px solid ${p.color}`, boxShadow: `0 12px 40px ${p.color}40` }}>
+                              <img src={p.foto} alt={p.nombre} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = "none"; e.target.parentElement.innerHTML = `<div class="w-full h-full flex items-center justify-center" style="background: ${p.gradient}"><span class="text-5xl font-black text-white">${p.iniciales}</span></div>`; }} />
+                            </div>
+                            <div className="absolute -bottom-2 -right-2 w-12 h-12 rounded-full flex items-center justify-center" style={{ background: p.gradient, boxShadow: `0 8px 20px ${p.color}50` }}>
+                              <Icono size={20} className="text-white" />
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex-1 text-center lg:text-left">
+                          <div className="text-[10px] font-mono tracking-[0.3em] mb-1" style={{ color: p.color }}>FUNDADOR · {p.area.toUpperCase()}</div>
+                          <h3 className="text-2xl md:text-3xl font-black text-stone-100 font-display mb-1">{p.nombre}</h3>
+                          <div className="flex items-center justify-center lg:justify-start gap-2 mb-3 flex-wrap">
+                            <span className="px-2 py-0.5 text-xs font-mono font-bold rounded" style={{ background: p.color + "20", color: p.color, border: `1px solid ${p.color}40` }}>{p.rol}</span>
+                            <span className="text-xs text-stone-500">{p.carrera}</span>
+                          </div>
+                          <p className="text-stone-300 text-sm md:text-base leading-relaxed italic">"{p.frase}"</p>
+                        </div>
+                      </div>
+                    ) : (
+                      // Layout normal (vertical)
+                      <div className="relative">
+                        <div className="flex justify-center mb-4">
+                          <div className="relative">
+                            <div className="absolute inset-0 rounded-full blur-xl opacity-40" style={{ background: p.gradient }}></div>
+                            <div className="relative w-24 h-24 rounded-full overflow-hidden" style={{ border: `2px solid ${p.color}`, boxShadow: `0 8px 24px ${p.color}30` }}>
+                              <img src={p.foto} alt={p.nombre} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = "none"; e.target.parentElement.innerHTML = `<div class="w-full h-full flex items-center justify-center" style="background: ${p.gradient}"><span class="text-3xl font-black text-white">${p.iniciales}</span></div>`; }} />
+                            </div>
+                            <div className="absolute -bottom-1 -right-1 w-9 h-9 rounded-full flex items-center justify-center" style={{ background: p.gradient, boxShadow: `0 4px 12px ${p.color}40` }}>
+                              <Icono size={14} className="text-white" />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="text-center">
+                          <div className="text-[9px] font-mono tracking-[0.25em] mb-1" style={{ color: p.color }}>{p.rol} · {p.area.toUpperCase()}</div>
+                          <h3 className="text-lg font-black text-stone-100 font-display mb-1">{p.nombre}</h3>
+                          <div className="text-[11px] text-stone-500 mb-3">{p.carrera}</div>
+                          <p className="text-stone-400 text-xs leading-relaxed italic px-2">"{p.frase}"</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Misión */}
+          <div className="px-6 md:px-12 pb-8">
+            <div className="p-6 md:p-8 grain relative overflow-hidden" style={{ background: "linear-gradient(135deg, #2a2018, #1a1612)", border: "1px solid #3a3028", borderRadius: "16px" }}>
+              <div className="absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl -translate-y-16 translate-x-16" style={{ background: "rgba(249, 115, 22, 0.1)" }}></div>
+              <div className="relative">
+                <div className="flex items-center gap-2 mb-3">
+                  <Target size={16} className="text-orange-500" />
+                  <span className="text-[10px] font-mono tracking-[0.3em] text-orange-500">NUESTRA MISIÓN</span>
+                </div>
+                <h3 className="text-xl md:text-2xl font-black text-stone-100 font-display mb-3">Digitalizar la industria colombiana, un proveedor a la vez.</h3>
+                <p className="text-stone-400 leading-relaxed">
+                  Creemos que las pequeñas y medianas empresas industriales de Colombia merecen las mismas herramientas que las grandes corporaciones. Por eso construimos rawlink: una plataforma que conecta empresas con proveedores verificados, automatiza cotizaciones, ofrece inteligencia de mercado en tiempo real y permite gestionar inventario y costos desde un solo lugar.
+                  <br /><br />
+                  No somos solo un marketplace. Somos el aliado tecnológico que la industria nacional estaba esperando.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA final */}
+          <div className="p-6 md:p-12 pt-0">
+            <div className="p-8 text-center grain relative overflow-hidden" style={{ background: "linear-gradient(135deg, #F97316 0%, #EA580C 100%)", borderRadius: "16px" }}>
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-12 translate-x-12"></div>
+              <div className="relative">
+                <Sparkles size={28} className="mx-auto text-stone-900 mb-3" />
+                <h3 className="text-2xl md:text-3xl font-black text-stone-900 mb-2 font-display">Expoandes 2026</h3>
+                <p className="text-stone-900/80 mb-5 max-w-xl mx-auto">Presentado con orgullo por estudiantes de Ingeniería de Sistemas. Gracias por darnos la oportunidad de mostrarles lo que estamos construyendo.</p>
+                <a href="https://wa.me/573143844070?text=Hola%20rawlink%20%F0%9F%91%8B%2C%20me%20gustaría%20conocer%20más%20sobre%20su%20proyecto" target="_blank" rel="noopener noreferrer" className="px-6 py-3 rounded-lg font-bold bg-stone-900 text-orange-400 hover:-translate-y-0.5 transition-all inline-flex items-center gap-2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                  Hablar con el equipo <ArrowRight size={16} />
+                </a>
+              </div>
             </div>
           </div>
         </div>
